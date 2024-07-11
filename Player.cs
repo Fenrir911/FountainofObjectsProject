@@ -13,8 +13,11 @@ namespace FountainOfObjects
         public (int row, int column) Coordinates;
         Room currentRoom;
         private bool _threatDetected = false;
+        private bool _alive = true;
+        public bool Dead { get => !_alive; }
         public Contents threatType = Contents.Empty;
-
+        public int Row() { return _row; }
+        public int Column() { return _column; }
         public Player()
         {
             _row = 0;
@@ -22,13 +25,11 @@ namespace FountainOfObjects
             Coordinates = (_row, _column);
         }
 
-        public int Row() { return _row; }
-        public int Column() { return _column; }
         public void CheckAdjacentRooms(Room[,] rooms)
         {
             int index = 0;
-            Room[]? adjacentRooms = new Room[8];
-            Contents[] contents = new Contents[8];
+            Room[]? adjacentRooms = new Room[9];
+            Contents[] contents = new Contents[9];
             foreach (Room room in rooms)
             {
                 if ((room.Row == _row + 1 && room.Column == _column) || (room.Row == _row - 1 && room.Column == _column) || (room.Column == _column + 1 && room.Row == _row) || (room.Column == _column - 1 && room.Row == _row) ||
@@ -42,7 +43,7 @@ namespace FountainOfObjects
             {
                 if (adjacentRooms[i] != null)
                     {
-                    if (adjacentRooms[i].RoomContents == Contents.PtTrap)
+                    if (adjacentRooms[i].RoomContents == Contents.PitTrap || adjacentRooms[i].RoomContents == Contents.Maelstrom)
                     {
                         threatType = adjacentRooms[i].RoomContents;
                         _threatDetected = true;
@@ -53,11 +54,13 @@ namespace FountainOfObjects
              _threatDetected = false;
             return;
         }
+       
         public bool ThreatDetected(Room[ , ] rooms)
         {
             CheckAdjacentRooms(rooms);
             return _threatDetected;
         }
+ 
         public void SetCurrentRoom(Room[,] rooms)
         {
             Coordinates = (_row, _column);
@@ -65,6 +68,10 @@ namespace FountainOfObjects
             {
                 if (room.Coordinates == Coordinates)
                     currentRoom = room;
+                if (currentRoom.RoomContents == Contents.PitTrap)
+                {
+                   _alive = false;
+                }
             }
         }
         public Room GetCurrentRoom()
@@ -95,6 +102,18 @@ namespace FountainOfObjects
                         currentRoom.SetFountainStatus();
                     }
                     break;
+            }
+        }public void SetAlive()
+        {
+            _row = 0; 
+            _column = 0;
+            _alive = true;
+        }
+        public void PlayerDied()
+        {
+            if (Dead)
+            {
+                Console.WriteLine("\nYou have Died. Better luck next time");
             }
         }
 

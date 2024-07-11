@@ -18,6 +18,8 @@ namespace FountainOfObjects
         Room fountainRoom;
         Room entrance;
         bool HasWon = false;
+        
+
         public GameManager()
         {
             player = new Player();
@@ -27,7 +29,7 @@ namespace FountainOfObjects
         public void InitializeGame()
         {
             RoomSize();
-            while (!HasWon)
+            while (!HasWon && !player.Dead)
             {
                 GetAction();
             }
@@ -52,6 +54,9 @@ namespace FountainOfObjects
                     case "large":
                         CreateRooms(8, 8);
                         break;
+                    default:
+                        CreateRooms();
+                        break;
 
                 }
             }
@@ -61,14 +66,14 @@ namespace FountainOfObjects
             player.SetCurrentRoom(RoomGrid);
             CheckWinState();
 
-                string readResult;
-                bool legalMove = false;
+            string readResult;
+            bool legalMove = false;
+
+            if (!HasWon && !player.Dead)
+            {
                 Console.WriteLine("-----------------------------------------");
                 Console.WriteLine($"You are in the room at {player.GetCurrentRoom().ToString()}");
-
                 DisplayMessage();
-            if (!HasWon)
-            {
                 while (legalMove == false)
                 {
                     readResult = Console.ReadLine();
@@ -171,8 +176,11 @@ namespace FountainOfObjects
             {
                 switch (player.threatType)
                 {
-                    case Contents.PtTrap:
+                    case Contents.PitTrap:
                         Console.WriteLine("You feel a draft. There is a pit in a nearby room.");
+                        break;
+                    case Contents.Maelstrom:
+                        Console.WriteLine("You hear the growling and groaning of a maelstrom nearby");
                         break;
                 }
             }
@@ -195,18 +203,45 @@ namespace FountainOfObjects
         }
         private void CheckWinState()
         {
+            if(player.Dead)
+            {
+                player.PlayerDied();
+                PlayAgain();
+            }
             if (fountainRoom.FountainEnabled() && player.GetCurrentRoom() == entrance)
             {
                 HasWon = true;
             }
         }
 
+        public void PlayAgain()
+        {
+            string readResult;
+            Console.WriteLine("Would you like to play again? y/n");
+            readResult = Console.ReadLine();
+            if (readResult != null)
+            {
+                readResult = readResult.ToLower();
+                switch (readResult)
+                {
+                    case "y":
+                        player.SetAlive();
+                        player.SetCurrentRoom(RoomGrid);
+                        break;
+                    default:
+                        Environment.Exit(0);
+                        break;
+                }
+            }
+        }
     
         public void SetRoomContents()
         {
             RoomGrid[0, 0].RoomContents = Contents.Entrance;
             RoomGrid[0, 2].RoomContents = Contents.Fountain;
-            RoomGrid[1, 3].RoomContents = Contents.PtTrap;
+            RoomGrid[2, 2].RoomContents = Contents.PitTrap;
+            RoomGrid[1, 3].RoomContents = Contents.Maelstrom;
+            
             fountainRoom = RoomGrid[0, 2];
             entrance = RoomGrid[0, 0];
         }

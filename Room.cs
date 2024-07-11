@@ -47,4 +47,4 @@ namespace FountainOfObjects
     }
     
 }
-enum Contents { Empty, Entrance, Fountain, PtTrap }
+enum Contents { Empty, Entrance, Fountain, PitTrap, Maelstrom }
