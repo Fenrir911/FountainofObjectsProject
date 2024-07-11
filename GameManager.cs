@@ -34,6 +34,8 @@ namespace FountainOfObjects
             {
                 GetAction();
             }
+            Console.WriteLine(WinText);
+            Console.ReadKey();
         }
 
         public void RoomSize()
@@ -285,7 +287,7 @@ Maelstroms are violent forces of sentient wind. Entering a room with one could t
 Amaroks roam the caverns. Encountering one is certain death, but you can smell their rotten stench in nearby rooms.
 You carry with you a bow and a quiver of arrows. You can use them to shoot monsters in the caverns but be warned: you have a limited supply.
 ";
-
+        public string WinText = "The Fountain of Objects has been reactivated, and you have escaped with your life!\nYou Win!";
         public void SetRoomContents()
         {
             RoomGrid[0, 0].RoomContents = Contents.Entrance;
