@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -11,13 +12,15 @@ namespace FountainOfObjects
         int _row;
         int _column;
         public (int row, int column) Coordinates;
-        Room currentRoom;
+        public int Row { get => _row; set => _row = value; }
+        public int Column { get => _column; set => _column = value; }
+        public int ArrowCount = 5;
         private bool _threatDetected = false;
         private bool _alive = true;
         public bool Dead { get => !_alive; }
-        public Contents threatType = Contents.Empty;
-        public int Row() { return _row; }
-        public int Column() { return _column; }
+        public Contents[] threatType;
+        Room currentRoom;
+        Room enemyRoom;
         public Player()
         {
             _row = 0;
@@ -28,29 +31,36 @@ namespace FountainOfObjects
         public void CheckAdjacentRooms(Room[,] rooms)
         {
             int index = 0;
+            int roomIndex = 0;
             Room[]? adjacentRooms = new Room[9];
-            Contents[] contents = new Contents[9];
+            threatType = new Contents[3];
             foreach (Room room in rooms)
             {
                 if ((room.Row == _row + 1 && room.Column == _column) || (room.Row == _row - 1 && room.Column == _column) || (room.Column == _column + 1 && room.Row == _row) || (room.Column == _column - 1 && room.Row == _row) ||
                     (room.Row == _row - 1 && room.Column == _column - 1) || (room.Row == _row - 1 && room.Column == _column + 1) ||(room.Row == _row + 1 && room.Column == _column - 1) || (room.Row == _row + 1 && room.Column == _column + 1))
                 { 
-                    index++;
-                    adjacentRooms[index] = room; 
+                    roomIndex++;
+                    adjacentRooms[roomIndex] = room; 
                 }
             }
             for (int i = 0; i < adjacentRooms.Length - 1; i++)
             {
-                if (adjacentRooms[i] != null)
+                if ( adjacentRooms[i] != null)
                     {
-                    if (adjacentRooms[i].RoomContents == Contents.PitTrap || adjacentRooms[i].RoomContents == Contents.Maelstrom)
-                    {
-                        threatType = adjacentRooms[i].RoomContents;
-                        _threatDetected = true;
-                        return;
+                        if (adjacentRooms[i].RoomContents == Contents.PitTrap || adjacentRooms[i].RoomContents == Contents.Maelstrom || adjacentRooms[i].RoomContents == Contents.Amarok)
+                        {
+                        threatType[index] = adjacentRooms[i].RoomContents;
+                        if(adjacentRooms[i].RoomContents == Contents.Maelstrom || adjacentRooms[i].RoomContents == Contents.Amarok)
+                            { enemyRoom = adjacentRooms[i]; }
+                        index++;
+                        }
                     }
-                }
             }
+            if (threatType != null)
+            {
+                _threatDetected = true;
+                return;
+            }    
              _threatDetected = false;
             return;
         }
@@ -68,12 +78,36 @@ namespace FountainOfObjects
             {
                 if (room.Coordinates == Coordinates)
                     currentRoom = room;
-                if (currentRoom.RoomContents == Contents.PitTrap)
+            }
+            if (currentRoom.RoomContents == Contents.PitTrap)
+            {
+                Console.WriteLine("You fell into a pit.");
+                _alive = false;
+            }
+            else if (currentRoom.RoomContents == Contents.Amarok)
+            {
+                Console.WriteLine("The amarok had you for lunch.");
+                _alive = false;
+            }
+            else if (currentRoom.RoomContents == Contents.Maelstrom)
+            {
+                Console.WriteLine($"You have been wooshed away by a Maelstrom. Your coordinates were {Coordinates.ToString()}.");
+                currentRoom.MaelstromEffect(rooms);
+                _row -= 1; _column += 2;
+                if (_row <= 0) _row = 0;
+                if (_column >= rooms.GetLength(1) - 1) _column = rooms.GetLength(1) - 1;
+                Coordinates = (_row, _column);
+
+                foreach (Room room in rooms)
                 {
-                   _alive = false;
+                    if (room.Coordinates == Coordinates)
+                    {
+                        currentRoom = room;
+                    }
                 }
             }
         }
+
         public Room GetCurrentRoom()
         {
             return currentRoom;
@@ -102,8 +136,41 @@ namespace FountainOfObjects
                         currentRoom.SetFountainStatus();
                     }
                     break;
+                case Actions.shootNorth:
+                    if(enemyRoom.Coordinates == (Coordinates.row - 1, Coordinates.column))
+                        {
+                        Console.WriteLine("You have struck a beast");
+                        enemyRoom.RoomContents = Contents.Empty;
+                        }
+                    ArrowCount--;
+                    break;
+                case Actions.shootSouth:
+                    if (enemyRoom.Coordinates == (Coordinates.row + 1, Coordinates.column))
+                    {
+                        Console.WriteLine("You have struck a beast");
+                        enemyRoom.RoomContents = Contents.Empty;
+                    }
+                    ArrowCount--;
+                    break;
+                case Actions.shootEast:
+                    if (enemyRoom.Coordinates == (Coordinates.row, Coordinates.column + 1))
+                    {
+                        Console.WriteLine("You have struck a beast");
+                        enemyRoom.RoomContents = Contents.Empty;
+                    }
+                    ArrowCount--;
+                    break;
+                case Actions.shootWest:
+                    if (enemyRoom.Coordinates == (Coordinates.row, Coordinates.column - 1))
+                    {
+                        Console.WriteLine("You have struck a beast");
+                        enemyRoom.RoomContents = Contents.Empty;
+                    }
+                    ArrowCount--;
+                    break;
             }
-        }public void SetAlive()
+        }
+            public void SetAlive()
         {
             _row = 0; 
             _column = 0;
@@ -116,6 +183,7 @@ namespace FountainOfObjects
                 Console.WriteLine("\nYou have Died. Better luck next time");
             }
         }
+        
 
     }
-} enum Actions { north, south, east, west, enable}
+} enum Actions { north, south, east, west, enable, shootNorth, shootSouth, shootEast, shootWest }

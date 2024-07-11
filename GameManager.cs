@@ -28,6 +28,7 @@ namespace FountainOfObjects
 
         public void InitializeGame()
         {
+            Console.WriteLine(StartText());
             RoomSize();
             while (!HasWon && !player.Dead)
             {
@@ -38,7 +39,7 @@ namespace FountainOfObjects
         public void RoomSize()
         {
             string readResult;
-            Console.WriteLine("How big would you like the cave to be\n\t1. Small\n\t2. Medium\n\t3. Large");
+            Console.WriteLine("How big would you like the cave to be\n1. Small\n2. Medium\n3. Large");
             readResult = Console.ReadLine();
             if (readResult != null)
             {
@@ -72,7 +73,7 @@ namespace FountainOfObjects
             if (!HasWon && !player.Dead)
             {
                 Console.WriteLine("-----------------------------------------");
-                Console.WriteLine($"You are in the room at {player.GetCurrentRoom().ToString()}");
+                Console.WriteLine($"You are in the room at {player.GetCurrentRoom().ToString()} with {player.ArrowCount} arrow(s)");
                 DisplayMessage();
                 while (legalMove == false)
                 {
@@ -83,7 +84,7 @@ namespace FountainOfObjects
                         switch (readResult)
                         {
                             case "move north":
-                                if (player.Row() - 1 >= 0)
+                                if (player.Row - 1 >= 0)
                                 {
                                     player.Action(Actions.north);
                                     legalMove = true;
@@ -92,7 +93,7 @@ namespace FountainOfObjects
                                 Console.WriteLine("Invalid Move");
                                 continue;
                             case "move south":
-                                if (player.Row() + 1 <= RoomGrid.GetLength(0))
+                                if (player.Row + 1 <= RoomGrid.GetLength(0) - 1)
                                 {
                                     player.Action(Actions.south);
                                     legalMove = true;
@@ -101,7 +102,7 @@ namespace FountainOfObjects
                                 Console.WriteLine("Invalid Move");
                                 continue;
                             case "move east":
-                                if (player.Column() + 1 <= RoomGrid.GetLength(1))
+                                if (player.Column + 1 <= RoomGrid.GetLength(1) - 1)
                                 {
                                     player.Action(Actions.east);
                                     legalMove = true;
@@ -110,7 +111,7 @@ namespace FountainOfObjects
                                 Console.WriteLine("Invalid Move");
                                 continue;
                             case "move west":
-                                if (player.Column() - 1 >= 0)
+                                if (player.Column - 1 >= 0)
                                 {
                                     player.Action(Actions.west);
                                     legalMove = true;
@@ -127,6 +128,30 @@ namespace FountainOfObjects
                                 }
                                 Console.WriteLine("Invalid Move");
                                 continue;
+                            case "shoot north":
+                                legalMove = true;
+                                player.Action(Actions.shootNorth);
+                                break;
+                            case "shoot south":
+                                legalMove = true;
+                                player.Action(Actions.shootSouth);
+                                break;
+                            case "shoot east":
+                                legalMove = true;
+                                player.Action(Actions.shootEast);
+                                break;
+                            case "shoot west":
+                                legalMove = true;
+                                player.Action(Actions.shootWest);
+                                break;
+                            case "help":
+                                legalMove = true;
+                                Console.WriteLine(HelpText());
+                                break;
+                            default:
+                                Console.WriteLine("Invalid input");
+                                continue;
+
                         }
                     }
 
@@ -174,14 +199,20 @@ namespace FountainOfObjects
                 Console.WriteLine("You hear the rushing waters from the Fountain of Objects. It has been reactivated!");
             else if (player.ThreatDetected(RoomGrid))
             {
-                switch (player.threatType)
+                foreach (Contents threat in player.threatType)
                 {
-                    case Contents.PitTrap:
-                        Console.WriteLine("You feel a draft. There is a pit in a nearby room.");
-                        break;
-                    case Contents.Maelstrom:
-                        Console.WriteLine("You hear the growling and groaning of a maelstrom nearby");
-                        break;
+                    switch (threat)
+                    {
+                        case Contents.PitTrap:
+                            Console.WriteLine("You feel a draft. There is a pit in a nearby room.");
+                            break;
+                        case Contents.Maelstrom:
+                            Console.WriteLine("You hear the growling and groaning of a maelstrom nearby");
+                            break;
+                        case Contents.Amarok:
+                            Console.WriteLine("You can smell the rotten stench of an amarok in a nearby room.");
+                            break;
+                    }
                 }
             }
             else if (HasWon)
@@ -234,13 +265,34 @@ namespace FountainOfObjects
                 }
             }
         }
-    
+        public string HelpText() => @"Commands:
+move north: move one row up
+move south: move one row down
+move east: move one column right
+move west: move one column left
+shoot north: shoot arrow one row up
+shoot south: shoot arrow one row down
+shoot east: shoot arrow one column right
+shoot west: shoot arrow one column left
+enable fountian: enables fountain if in room";
+        public string StartText() => @"You enter the Cavern of Objects, a maze of rooms filled with dangerous pits in search of the Fountain of Objects.
+Light is visible only in the entrance, and no other light is seen anyhwere in the caverns.
+You must navigate the Caverns with your other senses.
+Find the Fountain of Objects, activate it, and return to the entrance.
+
+Look out for pits. You will feel a breeze if a pit is in an adjacent room. If you enter a room with a pit, you will die.
+Maelstroms are violent forces of sentient wind. Entering a room with one could transport you to any other location in the caverns. You will be able to hear their growling and groaning in nearby rooms.
+Amaroks roam the caverns. Encountering one is certain death, but you can smell their rotten stench in nearby rooms.
+You carry with you a bow and a quiver of arrows. You can use them to shoot monsters in the caverns but be warned: you have a limited supply.
+";
+
         public void SetRoomContents()
         {
             RoomGrid[0, 0].RoomContents = Contents.Entrance;
             RoomGrid[0, 2].RoomContents = Contents.Fountain;
-            RoomGrid[2, 2].RoomContents = Contents.PitTrap;
-            RoomGrid[1, 3].RoomContents = Contents.Maelstrom;
+            RoomGrid[1, 0].RoomContents = Contents.PitTrap;
+            RoomGrid[0, 3].RoomContents = Contents.Maelstrom;
+            RoomGrid[3, 3].RoomContents = Contents.Amarok;
             
             fountainRoom = RoomGrid[0, 2];
             entrance = RoomGrid[0, 0];

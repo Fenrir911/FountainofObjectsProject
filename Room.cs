@@ -44,7 +44,28 @@ namespace FountainOfObjects
                 _fountainEnabled = true;
                 }
         }
+        public void MaelstromEffect(Room[ , ] rooms)
+        {
+            this.RoomContents = Contents.Empty;
+            (int row, int column) newCoordinates = (_row + 1, _column - 2);
+            if (newCoordinates.row > rooms.GetLength(0) - 1)
+                newCoordinates.row = rooms.GetLength(0) - 1;
+            if (newCoordinates.column <= 0)
+                newCoordinates.column = 0;
+             for(int i = 0; i < rooms.GetLength(0) - 1; i++)
+            {
+                for (int j = 0; j <  rooms.GetLength(1) - 1; j++)
+                {
+                    if(rooms[i, j].Coordinates == newCoordinates)
+                        {
+                        rooms[i, j].RoomContents = Contents.Maelstrom;
+                        break;
+                    }
+                }
+            }
+            }
+        }
+        
     }
     
-}
-enum Contents { Empty, Entrance, Fountain, PitTrap, Maelstrom }
+enum Contents { Empty, Entrance, Fountain, PitTrap, Maelstrom, Amarok }
