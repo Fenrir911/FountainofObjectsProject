@@ -18,30 +18,32 @@ namespace FountainOfObjects
         Room fountainRoom;
         Room entrance;
         bool HasWon = false;
-        
+        DateTime startTime;
+        TimeSpan gameTime;
 
         public GameManager()
         {
-            player = new Player();
         }
 
 
         public void InitializeGame()
         {
             Console.WriteLine(StartText());
+            startTime = DateTime.Now;
             RoomSize();
             while (!HasWon && !player.Dead)
             {
                 GetAction();
             }
             Console.WriteLine(WinText);
+            GetPlayTime();
             Console.ReadKey();
         }
 
         public void RoomSize()
         {
             string readResult;
-            Console.WriteLine("How big would you like the cave to be\n1. Small\n2. Medium\n3. Large");
+            Console.WriteLine("How big would you like the cave to be\nSmall\nMedium\nLarge");
             readResult = Console.ReadLine();
             if (readResult != null)
             {
@@ -66,7 +68,7 @@ namespace FountainOfObjects
         }
         public void GetAction()
         {
-            player.SetCurrentRoom(RoomGrid);
+            player.SetCurrentRoom();
             CheckWinState();
 
             string readResult;
@@ -174,6 +176,7 @@ namespace FountainOfObjects
                 }
             }
             SetRoomContents();
+            player = new Player(RoomGrid);
             return RoomGrid;
         }
         public Room[,] CreateRooms(int rows, int columns)
@@ -189,17 +192,41 @@ namespace FountainOfObjects
                 }
             }
             SetRoomContents();
+            player = new Player(RoomGrid);
             return RoomGrid;
+        }
+        public void SetRoomContents()
+        {
+            RoomGrid[0, 0].RoomContents = Contents.Entrance;
+            RoomGrid[0, 2].RoomContents = Contents.Fountain;
+            RoomGrid[1, 0].RoomContents = Contents.PitTrap;
+            RoomGrid[0, 3].RoomContents = Contents.Maelstrom;
+            RoomGrid[3, 3].RoomContents = Contents.Amarok;
+
+            fountainRoom = RoomGrid[0, 2];
+            entrance = RoomGrid[0, 0];
+        }
+        public void DisplayRoomCoords()
+        {
+            for (int i = 0; i < _maxRows; i++)
+            {
+                for (int j = 0; j < _maxColumns; j++)
+                {
+                    Console.Write(RoomGrid[i, j].ToString());
+                }
+                Console.WriteLine();
+            }
+
         }
         public void DisplayMessage()
         {
             if (player.GetCurrentRoom() == entrance)
                 Console.WriteLine("You see the light coming from the cavern entrance.");
             else if (player.GetCurrentRoom() == fountainRoom && !fountainRoom.FountainEnabled())
-                Console.WriteLine("You hear the water dripping in this room. The Fountian of Objects is here!");
+                Console.WriteLine("You hear the water dripping in this room. The Fountain of Objects is here!");
             else if (player.GetCurrentRoom() == fountainRoom && fountainRoom.FountainEnabled())
                 Console.WriteLine("You hear the rushing waters from the Fountain of Objects. It has been reactivated!");
-            else if (player.ThreatDetected(RoomGrid))
+            else if (player.ThreatDetected())
             {
                 foreach (Contents threat in player.threatType)
                 {
@@ -217,28 +244,15 @@ namespace FountainOfObjects
                     }
                 }
             }
-            else if (HasWon)
-                Console.WriteLine("The Fountain of Objects has been reactivated, and you have escaped with your life!\nYouWin!");
             Console.Write("What do you want to do? ");
         }
 
-        public void DisplayRoomCoords()
-        {
-            for (int i = 0; i < _maxRows; i++)
-            {
-                for (int j = 0; j < _maxColumns; j++)
-                {
-                    Console.Write(RoomGrid[i, j].ToString());
-                }
-                Console.WriteLine();
-            }
-
-        }
         private void CheckWinState()
         {
             if(player.Dead)
             {
                 player.PlayerDied();
+                GetPlayTime();
                 PlayAgain();
             }
             if (fountainRoom.FountainEnabled() && player.GetCurrentRoom() == entrance)
@@ -259,13 +273,19 @@ namespace FountainOfObjects
                 {
                     case "y":
                         player.SetAlive();
-                        player.SetCurrentRoom(RoomGrid);
+                        player.SetCurrentRoom();
+                        startTime = DateTime.Now;
                         break;
                     default:
                         Environment.Exit(0);
                         break;
                 }
             }
+        }
+        public void GetPlayTime()
+        {
+            gameTime = DateTime.Now - startTime;
+            Console.WriteLine($"Total playtime {gameTime}\n");
         }
         public string HelpText() => @"Commands:
 move north: move one row up
@@ -276,9 +296,9 @@ shoot north: shoot arrow one row up
 shoot south: shoot arrow one row down
 shoot east: shoot arrow one column right
 shoot west: shoot arrow one column left
-enable fountian: enables fountain if in room";
+enable fountain: enables fountain if in room";
         public string StartText() => @"You enter the Cavern of Objects, a maze of rooms filled with dangerous pits in search of the Fountain of Objects.
-Light is visible only in the entrance, and no other light is seen anyhwere in the caverns.
+Light is visible only in the entrance, and no other light is seen anywhere in the caverns.
 You must navigate the Caverns with your other senses.
 Find the Fountain of Objects, activate it, and return to the entrance.
 
@@ -288,17 +308,5 @@ Amaroks roam the caverns. Encountering one is certain death, but you can smell t
 You carry with you a bow and a quiver of arrows. You can use them to shoot monsters in the caverns but be warned: you have a limited supply.
 ";
         public string WinText = "The Fountain of Objects has been reactivated, and you have escaped with your life!\nYou Win!";
-        public void SetRoomContents()
-        {
-            RoomGrid[0, 0].RoomContents = Contents.Entrance;
-            RoomGrid[0, 2].RoomContents = Contents.Fountain;
-            RoomGrid[1, 0].RoomContents = Contents.PitTrap;
-            RoomGrid[0, 3].RoomContents = Contents.Maelstrom;
-            RoomGrid[3, 3].RoomContents = Contents.Amarok;
-            
-            fountainRoom = RoomGrid[0, 2];
-            entrance = RoomGrid[0, 0];
-        }
-
     }
 }
